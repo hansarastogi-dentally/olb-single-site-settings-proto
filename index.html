@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Single site settings – OLB prototype</title>
+  <style>
+    :root {
+      --blue: #1a8cff;
+      --blue-dark: #0d6fd4;
+      --blue-soft: #e8f3ff;
+      --bg: #eef2f6;
+      --card: #fff;
+      --text: #1f2933;
+      --muted: #6b7280;
+      --border: #d8dee6;
+      --green: #12a454;
+      --green-bg: #e8f8ef;
+      --red: #d64545;
+      --red-bg: #fdecec;
+      --orange: #c77a12;
+      --shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+      --radius: 10px;
+      --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+    button, input, select, textarea { font: inherit; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* App chrome */
+    .topbar {
+      height: 56px;
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .logo { font-weight: 700; letter-spacing: -0.02em; font-size: 20px; }
+    .search {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(0,0,0,0.18);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: rgba(255,255,255,0.85);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .top-right { display: flex; align-items: center; gap: 14px; font-size: 14px; margin-left: auto; }
+    .badge {
+      background: #ef4444;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 6px;
+      margin-left: 4px;
+    }
+
+    .shell { display: flex; min-height: calc(100vh - 56px); }
+    .rail {
+      width: 60px;
+      background: #f7f9fc;
+      border-right: 1px solid var(--border);
+      padding: 16px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .rail-item {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #e5eaf0;
+      display: grid;
+      place-items: center;
+      color: #4b5563;
+      font-size: 14px;
+      position: relative;
+    }
+    .rail-item.active { background: var(--blue-soft); color: var(--blue); }
+    .rail-item .dot {
+      position: absolute;
+      top: -4px; right: -4px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      border-radius: 999px;
+      min-width: 16px;
+      height: 16px;
+      display: grid;
+      place-items: center;
+      padding: 0 3px;
+    }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .tabs {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 4px;
+      padding: 0 24px;
+      overflow-x: auto;
+    }
+    .tabs button {
+      border: 0;
+      background: transparent;
+      padding: 16px 12px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .tabs button.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 600;
+    }
+
+    .page { padding: 28px 32px 48px; }
+    .page-title { font-size: 28px; font-weight: 700; margin: 0 0 6px; }
+    .page-sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+
+    .layout-2 {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid #edf1f5;
+    }
+    .side-card { padding: 16px; }
+    .side-card h3 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: none;
+    }
+    .side-nav button {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .side-nav button.active { background: #eef1f5; font-weight: 600; }
+    .side-nav button:hover { background: #f5f7fa; }
+
+    .panel { padding: 24px; }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .panel-head h2 { margin: 0 0 4px; font-size: 22px; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .btn {
+      border-radius: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: #f8fafc; }
+    .btn-primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-ghost { background: transparent; }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .switch input { display: none; }
+    .switch .track {
+      width: 36px;
+      height: 20px;
+      background: #c5ccd6;
+      border-radius: 999px;
+      position: relative;
+      transition: 0.15s;
+    }
+    .switch .track::after {
+      content: "";
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: 0.15s;
+    }
+    .switch input:checked + .track { background: var(--blue); }
+    .switch input:checked + .track::after { left: 18px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 14px 10px;
+      border-bottom: 1px solid #eef2f6;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f7fbff; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--blue-soft); }
+    .name { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .dot-color {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; flex: 0 0 auto;
+    }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .meta { color: var(--muted); line-height: 1.45; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pill-on { background: var(--green-bg); color: var(--green); }
+    .pill-off { background: var(--red-bg); color: var(--red); }
+    .pill-nhs { background: var(--blue-soft); color: var(--blue-dark); }
+    .pill-default { background: #fde7ef; color: #b4235a; }
+    .icon-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid var(--border); background: #fff;
+      cursor: pointer; display: grid; place-items: center;
+    }
+
+    .form-page .back-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    }
+    .back {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border); background: #fff;
+      cursor: pointer; display: grid; place-items: center;
+    }
+    .form-card { padding: 0; overflow: hidden; }
+    .section {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 28px;
+      padding: 28px 32px;
+      border-bottom: 1px solid #eef2f6;
+    }
+    .section:last-child { border-bottom: 0; }
+    .section h3 { margin: 0 0 6px; font-size: 16px; }
+    .section .hint { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .fields { display: grid; gap: 16px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    label.field { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+    label.field span.req { color: var(--blue); }
+    label.field .help { font-weight: 400; color: var(--muted); font-size: 12px; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .colour-swatch {
+      width: 100%; height: 40px; border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 10px; gap: 10px;
+      background: #fff;
+    }
+    .colour-swatch i {
+      width: 22px; height: 22px; border-radius: 6px; display: block;
+    }
+    .toggle-row {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: #fafbfc;
+    }
+    .checklist {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #fff;
+    }
+    .checklist h4 { margin: 0 0 6px; font-size: 14px; }
+    .checklist p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+    .check-item {
+      display: flex; gap: 8px; align-items: center;
+      font-size: 13px; margin: 6px 0;
+    }
+    .ok { color: var(--green); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+    .empty-assign {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      align-items: center;
+      background: #fafbff;
+    }
+    .preview-widget {
+      background: linear-gradient(160deg, #d9c7ff, #f1e9ff);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 140px;
+    }
+    .preview-widget .mini {
+      background: #fff; border-radius: 10px; padding: 12px;
+      box-shadow: var(--shadow); font-size: 12px;
+    }
+    .prac-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .prac-top {
+      display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
+    }
+    .status-good { color: var(--green); font-size: 12px; margin-top: 4px; }
+    .status-warn { color: var(--orange); font-size: 12px; margin-top: 4px; }
+    .prac-controls {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 12px;
+      margin-top: 12px;
+      align-items: end;
+    }
+    .form-actions {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 20px 32px 28px;
+      border-top: 1px solid #eef2f6;
+      background: #fff;
+    }
+
+    .subtabs {
+      display: flex; gap: 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .subtabs button {
+      border: 0; background: transparent; padding: 10px 0;
+      color: var(--muted); cursor: pointer;
+      border-bottom: 2px solid transparent; font-size: 14px;
+    }
+    .subtabs button.active {
+      color: var(--blue); border-bottom-color: var(--blue); font-weight: 600;
+    }
+    .setting-block { margin-bottom: 22px; }
+    .setting-block label.title {
+      display: block; font-weight: 700; margin-bottom: 4px; font-size: 14px;
+    }
+    .setting-block .help { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .notif-row {
+      display: flex; justify-content: space-between; gap: 16px;
+      padding: 16px 0; border-bottom: 1px solid #eef2f6;
+      align-items: center;
+    }
+    .notif-toggles { display: flex; gap: 18px; }
+
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #111827; color: #fff; padding: 12px 16px;
+      border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(8px); transition: 0.2s;
+      pointer-events: none; z-index: 50; font-size: 14px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .proto-banner {
+      background: #111827; color: #fff; font-size: 12px;
+      padding: 6px 12px; display: flex; justify-content: space-between; gap: 12px;
+    }
+    .proto-banner strong { color: #93c5fd; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 1100px) {
+      .layout-2, .section, .empty-assign, .field-grid, .prac-controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="proto-banner">
+    <span><strong>Prototype</strong> · Single site OLB settings · based on Figma <code>yiIxGUoRw4KNFxKhpjhN1Y</code></span>
+    <span>Click through: reasons → create/edit → settings → plans → notifications</span>
+  </div>
+
+  <header class="topbar">
+    <div class="logo">dentally</div>
+    <div class="search">🔍 Search patients</div>
+    <div class="top-right">
+      <span>Greenwich Dental ▾</span>
+      <span>Tom Baldwin ▾</span>
+      <span>🔔<span class="badge">4</span></span>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="rail">
+      <div class="rail-item active">⌂</div>
+      <div class="rail-item">👤</div>
+      <div class="rail-item">⏱</div>
+      <div class="rail-item">📅</div>
+      <div class="rail-item">📋<span class="dot">22</span></div>
+      <div class="rail-item">➕</div>
+      <div style="flex:1"></div>
+      <div class="rail-item">✈</div>
+      <div class="rail-item">📈</div>
+      <div class="rail-item">🌐</div>
+      <div class="rail-item">⚙</div>
+    </aside>
+
+    <div class="main">
+      <nav class="tabs">
+        <button type="button">Home</button>
+        <button type="button">Practice</button>
+        <button type="button">Sites</button>
+        <button type="button">Diary</button>
+        <button type="button" class="active">Appointments &amp; online booking</button>
+        <button type="button">Users</button>
+        <button type="button">Treatment &amp; plans</button>
+        <button type="button">Contacts</button>
+        <button type="button">Templates</button>
+        <button type="button">Automation</button>
+        <button type="button">Integrations</button>
+        <button type="button">Developer</button>
+      </nav>
+
+      <div class="page" id="app"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const reasons = [
+      { id: 1, name: "New and lapsed patient", face: "New patient exam", colour: "#2f80ed", duration: 30, price: 75, deposit: null, trigger: "Exam and hygiene recall", nhs: true, online: true, practitioners: 6 },
+      { id: 2, name: "Child exam", face: "Child exam", colour: "#27ae60", duration: 30, price: 75, deposit: null, trigger: "Exam recall", nhs: true, online: true, practitioners: 6 },
+      { id: 3, name: "Exam (Child)", face: "Child exam", colour: "#9b51e0", duration: 30, price: 75, deposit: null, trigger: "Exam recall", nhs: true, online: true, practitioners: 6 },
+      { id: 4, name: "Exams (Adult)", face: "Adult exam", colour: "#f2994a", duration: 30, price: 75, deposit: null, trigger: "Exam recall", nhs: true, online: true, practitioners: 6 },
+      { id: 5, name: "Emergency", face: "Emergency", colour: "#eb5757", duration: 30, price: 75, deposit: null, trigger: "Exam recall", nhs: true, online: false, practitioners: 0 },
+      { id: 6, name: "New patient exam", face: "New patient exam", colour: "#56ccf2", duration: 30, price: 75, deposit: 20, trigger: "Exam recall", nhs: false, online: false, practitioners: 0 },
+      { id: 7, name: "Hygiene", face: "Scale and polish", colour: "#6fcf97", duration: 30, price: 75, deposit: 20, trigger: "Hygiene recall", nhs: false, online: true, practitioners: 6 },
+      { id: 8, name: "Extraction", face: "Extraction", colour: "#bb6bd9", duration: 30, price: 75, deposit: 20, trigger: "None", nhs: false, online: false, practitioners: 0 },
+      { id: 9, name: "RCT", face: "Root canal", colour: "#2d9cdb", duration: 60, price: 75, deposit: 20, trigger: "None", nhs: false, online: false, practitioners: 0 },
+      { id: 10, name: "Meeting", face: "Meeting", colour: "#828282", duration: 30, price: 0, deposit: null, trigger: "None", nhs: false, online: false, practitioners: 0 },
+    ];
+
+    const practitioners = [
+      { name: "Sarah Chen", status: "good", msg: "Great availability! Patients will see more than 10 appointments to book in the next 30 days.", zones: "1 selected", online: true },
+      { name: "Priya Shah", status: "good", msg: "Great availability! Patients will see more than 10 appointments to book in the next 30 days.", zones: "1 selected", online: true },
+      { name: "Dan Miller", status: "warn", msg: "Patients will see less than 10 slots in the next 30 days. Assign more zones to get more bookings.", zones: "1 selected", online: true },
+      { name: "Jake Aolia", status: "warn", msg: "Assign zones or turn on any free space", zones: "None", online: false },
+      { name: "Alex Michael", status: "warn", msg: "Assign zones or turn on any free space", zones: "None", online: false },
+    ];
+
+    const plans = [
+      { name: "NHS", def: true, discounts: "Not applicable", waive: "Not applicable", locking: false },
+      { name: "Private", def: true, discounts: "Not applicable", waive: "Not applicable", locking: true },
+      { name: "Den plan AA", def: false, discounts: "Consultations 20% off<br>Routine dental exams 10% off", waive: true, locking: true },
+      { name: "Plan name example", def: false, discounts: "Consultations 20% off", waive: false, locking: true },
+      { name: "Plan name example", def: false, discounts: "None", waive: false, locking: true },
+    ];
+
+    const state = {
+      view: "reasons",
+      showArchived: false,
+      createMode: "empty", // empty | filled
+      olbTab: "settings",
+      notifTab: "patient",
+    };
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function go(view, opts = {}) {
+      Object.assign(state, opts, { view });
+      render();
+      window.scrollTo(0, 0);
+    }
+
+    function shellSidebar(active) {
+      return `
+        <aside class="card side-card">
+          <h3>All practice settings</h3>
+          <div class="side-nav">
+            <button type="button" class="${active === "reasons" || active === "create" || active === "edit" ? "active" : ""}" data-go="reasons">📄 Appointment reasons</button>
+            <button type="button" class="${active === "olb" || active === "plan" ? "active" : ""}" data-go="olb">🔗 Online booking settings</button>
+            <button type="button" class="${active === "notifications" ? "active" : ""}" data-go="notifications">🔔 Notification settings</button>
+          </div>
+        </aside>`;
+    }
+
+    function pageHeader() {
+      return `
+        <h1 class="page-title">Appointments &amp; online booking</h1>
+        <p class="page-sub">Manage appointment types and online booking settings. <a href="#" onclick="return false">Learn more</a></p>`;
+    }
+
+    function reasonsView() {
+      const rows = reasons.map((r, i) => `
+        <tr class="clickable" data-edit="${r.id}">
+          <td>${i + 1}</td>
+          <td>
+            <div class="name"><i class="dot-color" style="background:${r.colour}"></i>${r.name}</div>
+            <div class="sub">${r.face}</div>
+          </td>
+          <td class="meta">
+            Duration: ${r.duration} mins<br>
+            ${r.deposit != null ? `Deposit: £${r.deposit.toFixed(2)}<br>` : ""}
+            Price: £${r.price.toFixed(2)}<br>
+            Trigger: ${r.trigger}
+          </td>
+          <td>${r.nhs ? `<span class="pill pill-nhs">NHS</span>` : ""}</td>
+          <td><span class="pill ${r.online ? "pill-on" : "pill-off"}">${r.online ? "On" : "Off"}</span></td>
+          <td>${r.practitioners ? `${r.practitioners} practitioners` : `<a href="#" data-edit="${r.id}">Add practitioners</a>`}</td>
+          <td><button class="icon-btn" type="button" data-edit="${r.id}" title="Edit">✎</button></td>
+        </tr>`).join("");
+
+      return `
+        ${pageHeader()}
+        <div class="layout-2">
+          ${shellSidebar("reasons")}
+          <section class="card panel">
+            <div class="panel-head">
+              <div>
+                <h2>Appointment reasons</h2>
+                <p>Configure the appointments available for reception to book, and visible for online booking.</p>
+              </div>
+              <button class="btn btn-primary" type="button" data-go="create">Create appointment</button>
+            </div>
+            <div class="toolbar">
+              <label class="switch">
+                <input type="checkbox" id="archivedToggle" ${state.showArchived ? "checked" : ""} />
+                <span class="track"></span>
+                Show archived
+              </label>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Appointment reason</th>
+                    <th>Details</th>
+                    <th>NHS</th>
+                    <th>Online booking</th>
+                    <th>Online details</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </section>
+        </div>`;
+    }
+
+    function formView({ title, mode, filled }) {
+      const showChecklist = mode === "create" && !filled;
+      const showAssignEmpty = mode === "create" && !filled;
+      const showPracs = filled || mode === "edit";
+
+      return `
+        <div class="form-page">
+          <div class="back-row">
+            <button class="back" type="button" data-go="reasons" title="Back">←</button>
+            <div>
+              <h1 class="page-title" style="margin:0">${title}</h1>
+              <p class="page-sub" style="margin:4px 0 0">Configure the appointments available at your practice, this allows sites to add them to their online booking.</p>
+            </div>
+          </div>
+
+          <section class="card form-card">
+            <div class="section">
+              <div>
+                <h3>Visual identifiers</h3>
+                <p class="hint">Select how this appointment will display in the calendar</p>
+              </div>
+              <div class="fields field-grid">
+                <label class="field">List position
+                  <select><option>1</option><option>2</option><option>3</option></select>
+                </label>
+                <label class="field">Colour
+                  <div class="colour-swatch"><i style="background:${filled ? "#27ae60" : "#2f80ed"}"></i> ${filled ? "Green" : "Blue"}</div>
+                </label>
+              </div>
+            </div>
+
+            <div class="section">
+              <div>
+                <h3>Appointment details</h3>
+                <p class="hint">Add key information about this appointment</p>
+              </div>
+              <div class="fields">
+                <div class="field-grid">
+                  <label class="field">Appointment reason <span class="req">*</span>
+                    <input type="text" value="${filled ? "Child exam" : ""}" placeholder="e.g. Child exam" />
+                  </label>
+                  <label class="field">Trigger recall
+                    <select><option>${filled ? "Exam recall" : "None"}</option><option>Exam and hygiene recall</option></select>
+                  </label>
+                  <label class="field">Zone group
+                    <select><option>${filled ? "2 selected" : "None"}</option></select>
+                  </label>
+                  <div class="toggle-row">
+                    <label class="switch"><input type="checkbox" /><span class="track"></span></label>
+                    <div>
+                      <strong>Is this an NHS appointment?</strong>
+                      <div class="help">NHS appointments can’t take a deposit</div>
+                    </div>
+                  </div>
+                  <label class="field">Price
+                    <input type="text" value="${filled ? "£60.00" : "£0.00"}" />
+                  </label>
+                  <label class="field">Deposit
+                    <input type="text" value="${filled ? "£30.00" : "£0.00"}" />
+                  </label>
+                  <label class="field">Duration
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <input type="number" value="60" style="max-width:120px" />
+                      <span class="help">min</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div>
+                <h3>Online booking</h3>
+                <p class="hint">Set your online booking</p>
+              </div>
+              <div class="fields">
+                ${showChecklist ? `
+                  <div class="checklist">
+                    <h4>Online booking</h4>
+                    <p>Online booking will be available when all required information is filled</p>
+                    <div class="check-item"><span class="ok">✓</span> Patient-facing appointment name</div>
+                    <div class="check-item"><span class="bad">!</span> Appointment category</div>
+                    <div class="check-item"><span class="bad">!</span> Patient-facing description</div>
+                    <div class="check-item"><span class="bad">!</span> Assign practitioners</div>
+                  </div>` : `
+                  <div class="toggle-row">
+                    <label class="switch"><input type="checkbox" checked /><span class="track"></span></label>
+                    <div>
+                      <strong>Turn online booking on</strong>
+                      <div class="help">Online booking will be available for this appointment reason</div>
+                    </div>
+                  </div>`}
+                <label class="field">Patient-facing appointment name
+                  <input type="text" value="${filled ? "Child exam (Under 16)" : "Example text"}" />
+                </label>
+                <label class="field">Appointment category
+                  <select><option>${filled ? "Dental check-up" : "None"}</option><option>Hygiene</option><option>Emergency</option></select>
+                </label>
+                <label class="field">Patient-facing Description
+                  <textarea>${filled ? "Book your appointment online as a new patient or return easily if you haven’t visited in a while. Choose a time that suits you and complete a few quick details to confirm your booking." : ""}</textarea>
+                </label>
+              </div>
+            </div>
+
+            <div class="section">
+              <div>
+                <h3>Assign online practitioners</h3>
+                <p class="hint">Assign practitioners and zones</p>
+              </div>
+              <div class="fields">
+                ${showAssignEmpty ? `
+                  <div class="empty-assign">
+                    <div class="preview-widget">
+                      <div class="mini">
+                        <strong>The Classic (Clean and Polish)</strong>
+                        <div class="sub">30 min · from £70</div>
+                        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                          <span class="pill pill-nhs">Hygiene</span>
+                          <span class="pill pill-on">Available</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style="margin:0 0 6px">Setup online booking</h4>
+                      <p class="hint" style="margin-bottom:12px">Patients can’t book this appointment online yet. Assign practitioners and select their booking zones to activate it.</p>
+                      <button class="btn" type="button" id="fillFormBtn">Assign practitioners →</button>
+                    </div>
+                  </div>` : `
+                  <div class="toggle-row" style="margin-bottom:12px">
+                    <label class="switch"><input type="checkbox" /><span class="track"></span></label>
+                    <div>
+                      <strong>Book into any free space</strong>
+                      <div class="help">Book into any space outside of zones</div>
+                    </div>
+                  </div>
+                  ${practitioners.map(p => `
+                    <div class="prac-card">
+                      <div class="prac-top">
+                        <div>
+                          <label style="display:flex;gap:8px;align-items:center;font-weight:700">
+                            <input type="checkbox" ${p.online ? "checked" : ""} /> ${p.name}
+                          </label>
+                          <div class="${p.status === "good" ? "status-good" : "status-warn"}">${p.msg}</div>
+                        </div>
+                        <label class="switch">
+                          <input type="checkbox" ${p.online ? "checked" : ""} />
+                          <span class="track"></span>
+                          Available online
+                        </label>
+                      </div>
+                      <div class="prac-controls">
+                        <label class="field">Duration
+                          <input type="number" value="60" />
+                        </label>
+                        <label class="field">Specific zones
+                          <select><option>${p.zones}</option></select>
+                        </label>
+                        <div></div>
+                      </div>
+                    </div>`).join("")}`}
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn" type="button" data-go="reasons">Cancel</button>
+              ${mode === "edit" ? `<button class="btn" type="button" id="archiveBtn">Archive</button>` : ""}
+              <button class="btn btn-primary" type="button" id="saveBtn">Save appointment</button>
+              ${mode === "create" && !filled ? `<button class="btn btn-ghost" type="button" id="fillFormBtn2">Preview filled state</button>` : ""}
+            </div>
+          </section>
+        </div>`;
+    }
+
+    function olbView() {
+      const settings = `
+        <div class="subtabs">
+          <button type="button" class="${state.olbTab === "settings" ? "active" : ""}" data-olb-tab="settings">Settings</button>
+          <button type="button" class="${state.olbTab === "plans" ? "active" : ""}" data-olb-tab="plans">Plans</button>
+        </div>
+        ${state.olbTab === "settings" ? `
+          <div class="setting-block">
+            <div class="toggle-row">
+              <label class="switch"><input type="checkbox" /><span class="track"></span></label>
+              <div>
+                <strong>Allow online cancellations</strong>
+                <div class="help">Allow patients to cancel any appointment online up to 48 hours before their appointment. This applies to appointments booked either at reception or online</div>
+              </div>
+            </div>
+          </div>
+          <div class="setting-block">
+            <label class="title">Practice display name</label>
+            <div class="help">Choose how your practice will be displayed in the browser tab</div>
+            <input type="text" placeholder="Greenwich Dental" />
+          </div>
+          <div class="setting-block">
+            <label class="title">Practice URL</label>
+            <div class="help">Edit your practice URL</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" value="https://greenwichdental.dentally.co/book" />
+              <button class="icon-btn" type="button" title="Copy">🔗</button>
+              <button class="icon-btn" type="button" title="Open">↗</button>
+            </div>
+          </div>
+          <div class="setting-block">
+            <label class="title">Privacy policy URL</label>
+            <div class="help">Edit your privacy policy URL</div>
+            <input type="text" value="https://greenwichdental.example/privacy" />
+          </div>
+          <div class="form-actions" style="padding-left:0;padding-right:0;border:0">
+            <button class="btn btn-primary" type="button" id="saveSettingsBtn">Save settings</button>
+          </div>
+        ` : `
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Payment plan</th>
+                  <th>Discounts</th>
+                  <th>Waive Deposits</th>
+                  <th>Practitioner locking</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${plans.map((p, i) => `
+                  <tr class="clickable" data-plan="${i}">
+                    <td>
+                      <strong>${p.name}</strong>
+                      ${p.def ? ` <span class="pill pill-default">Default</span>` : ""}
+                    </td>
+                    <td class="meta">${p.discounts}</td>
+                    <td>${typeof p.waive === "string" ? p.waive : `<span class="pill ${p.waive ? "pill-on" : "pill-off"}">${p.waive ? "On" : "Off"}</span>`}</td>
+                    <td><span class="pill ${p.locking ? "pill-on" : "pill-off"}">${p.locking ? "On" : "Off"}</span></td>
+                    <td><button class="icon-btn" type="button" data-plan="${i}">✎</button></td>
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>
+        `}`;
+
+      return `
+        ${pageHeader()}
+        <div class="layout-2">
+          ${shellSidebar("olb")}
+          <section class="card panel">
+            <div class="panel-head">
+              <div>
+                <h2>Online booking settings</h2>
+                <p>Configure the online booking settings for your practice</p>
+              </div>
+            </div>
+            ${settings}
+          </section>
+        </div>`;
+    }
+
+    function planView() {
+      return `
+        <div class="form-page">
+          <div class="back-row">
+            <button class="back" type="button" data-go="olb" data-olb-tab="plans" title="Back">←</button>
+            <h1 class="page-title" style="margin:0">Den plan AA</h1>
+          </div>
+          <section class="card form-card">
+            <div class="section">
+              <div>
+                <h3>Practitioner locking and deposits</h3>
+                <p class="hint">Manage practitioner locking and waiving deposits for this plan</p>
+              </div>
+              <div class="fields field-grid">
+                <div class="toggle-row">
+                  <label class="switch"><input type="checkbox" /><span class="track"></span></label>
+                  <div>
+                    <strong>Practitioner locking for routine exams</strong>
+                    <div class="help">Only book routine exams with their assigned dentist</div>
+                  </div>
+                </div>
+                <div class="toggle-row">
+                  <label class="switch"><input type="checkbox" /><span class="track"></span></label>
+                  <div>
+                    <strong>Waive deposits for patients on this plan</strong>
+                    <div class="help">Patient will not pay the appointments deposit</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <div>
+                <h3>Discounts</h3>
+                <p class="hint">Apply discounts to appointment categories. Any discount set will automatically be reflected in the deposit amount required at booking.</p>
+              </div>
+              <div class="fields" style="display:grid;grid-template-columns:240px 1fr;gap:20px">
+                <div class="preview-widget">
+                  <div class="mini">
+                    <strong>Scale and polish</strong>
+                    <div class="sub">30min</div>
+                    <div class="sub" style="margin-top:6px">Our Classic Scale and Polish is a thorough pr…</div>
+                    <div style="margin-top:8px;font-weight:700">£70 / £35 · 50% off</div>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <label class="field">Dental check-up - New or lapsed patients<input type="number" value="20" /></label>
+                  <label class="field">Dental check-up - Existing patients<input type="number" value="20" /></label>
+                  <label class="field">Hygienist - New or lapsed patients<input type="number" value="20" /></label>
+                  <label class="field">Hygienist - Existing patients<input type="number" value="20" /></label>
+                  <label class="field">Emergency<input type="number" value="0" /></label>
+                  <label class="field">Consultation<input type="number" value="0" /></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="button" data-go="olb" data-olb-tab="plans">Cancel</button>
+              <button class="btn btn-primary" type="button" id="savePlanBtn">Save</button>
+            </div>
+          </section>
+        </div>`;
+    }
+
+    function notificationsView() {
+      const rows = [
+        ["Booking confirmation", "Send a confirmation when an appointment is booked online"],
+        ["Cancellation confirmation", "Send a confirmation when an appointment is cancelled"],
+        ["Task reminders", "Send reminders to complete pre-appointment tasks"],
+      ];
+      return `
+        ${pageHeader()}
+        <div class="layout-2">
+          ${shellSidebar("notifications")}
+          <section class="card panel">
+            <div class="panel-head">
+              <div>
+                <h2>Notification settings</h2>
+                <p>Manage what notifications your practice and patients receive for online bookings.</p>
+              </div>
+            </div>
+            <div class="subtabs">
+              <button type="button" class="${state.notifTab === "patient" ? "active" : ""}" data-notif-tab="patient">Patient notifications</button>
+              <button type="button" class="${state.notifTab === "practice" ? "active" : ""}" data-notif-tab="practice">Practice notifications</button>
+            </div>
+            ${rows.map(([t, d]) => `
+              <div class="notif-row">
+                <div>
+                  <strong>${t}</strong>
+                  <div class="help">${d}${state.notifTab === "practice" ? " (practice)" : ""}</div>
+                </div>
+                <div class="notif-toggles">
+                  <label class="switch">SMS <input type="checkbox" /><span class="track"></span></label>
+                  <label class="switch">Email <input type="checkbox" /><span class="track"></span></label>
+                </div>
+              </div>`).join("")}
+          </section>
+        </div>`;
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      if (state.view === "reasons") app.innerHTML = reasonsView();
+      else if (state.view === "create") app.innerHTML = formView({ title: "Create appointment", mode: "create", filled: state.createMode === "filled" });
+      else if (state.view === "edit") app.innerHTML = formView({ title: "Edit", mode: "edit", filled: true });
+      else if (state.view === "olb") app.innerHTML = olbView();
+      else if (state.view === "plan") app.innerHTML = planView();
+      else if (state.view === "notifications") app.innerHTML = notificationsView();
+      bind();
+    }
+
+    function bind() {
+      document.querySelectorAll("[data-go]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          const opts = {};
+          if (el.dataset.olbTab) opts.olbTab = el.dataset.olbTab;
+          go(el.dataset.go, opts);
+        });
+      });
+      document.querySelectorAll("[data-edit]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          go("edit");
+        });
+      });
+      document.querySelectorAll("[data-plan]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          go("plan");
+        });
+      });
+      document.querySelectorAll("[data-olb-tab]").forEach(el => {
+        el.addEventListener("click", () => go("olb", { olbTab: el.dataset.olbTab }));
+      });
+      document.querySelectorAll("[data-notif-tab]").forEach(el => {
+        el.addEventListener("click", () => go("notifications", { notifTab: el.dataset.notifTab }));
+      });
+      const archived = document.getElementById("archivedToggle");
+      if (archived) archived.addEventListener("change", () => {
+        state.showArchived = archived.checked;
+        toast(archived.checked ? "Showing archived reasons" : "Hiding archived reasons");
+      });
+      ["fillFormBtn", "fillFormBtn2"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("click", () => go("create", { createMode: "filled" }));
+      });
+      const saveBtn = document.getElementById("saveBtn");
+      if (saveBtn) saveBtn.addEventListener("click", () => {
+        toast("Appointment saved");
+        go("reasons");
+      });
+      const archiveBtn = document.getElementById("archiveBtn");
+      if (archiveBtn) archiveBtn.addEventListener("click", () => {
+        toast("Appointment archived");
+        go("reasons");
+      });
+      const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+      if (saveSettingsBtn) saveSettingsBtn.addEventListener("click", () => toast("Settings saved"));
+      const savePlanBtn = document.getElementById("savePlanBtn");
+      if (savePlanBtn) savePlanBtn.addEventListener("click", () => {
+        toast("Plan saved");
+        go("olb", { olbTab: "plans" });
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
